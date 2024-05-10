@@ -63,8 +63,9 @@ export default function Dashboard() {
               />
             </div>
             <Button
+              size="lg"
               type="submit"
-              className="h-12 w-full bg-[#c4a97e] text-[#6c5641] text-2xl p-3"
+              className="w-full bg-[#c4a97e] text-[#6c5641] text-2xl hover:text"
             >
               Login
             </Button>
@@ -72,7 +73,7 @@ export default function Dashboard() {
           <div className="mt-4 text-center text-lg text-[#95866f]">
             Don&apos;t have an account?{" "}
             <Link href="#" className="underline text-[#c4a97e]">
-              Sign up
+              Go Study and clear the exam to join IOCL and then book Room
             </Link>
           </div>
         </div>
