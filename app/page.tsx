@@ -7,21 +7,21 @@ import { Label } from "@/components/ui/label";
 
 export default function Dashboard() {
   return (
-    <div className="w-full min-h-screen lg:grid lg:grid-cols-2 bg-[#ece3d6]">
+    <div className="w-full lg:grid lg:grid-cols-2 bg-[#ece3d6]">
       <div className="flex items-center justify-center py-8 px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto items-center justify-center grid w-full sm:max-w-md lg:max-w-lg gap-6">
-          <div className="rounded-lg">
+        <div className="mx-auto grid w-full sm:max-w-md lg:max-w-lg gap-6">
+          <div className="flex justify-center items-center w-full">
             <Image
               src="/iocl_logo.png"
               alt="Image"
-              width="420"
-              height="220"
+              width="220"
+              height="120"
               className="rounded-lg object-cover dark:brightness-[0.2]"
             />
           </div>
           <div className="grid gap-2 text-center">
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#c4a97e]">
-              Login
+            <h1 className="text-2xl sm:text-2xl lg:text-4xl font-bold text-[#c4a97e]">
+              Conference Hall Booking
             </h1>
           </div>
           <div className="grid gap-4">
