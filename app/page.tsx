@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import LoginForm from "@/components/login-form";
 
 export default function Login() {
   return (
@@ -24,52 +25,7 @@ export default function Login() {
               Conference Hall Booking
             </h1>
           </div>
-          <div className="grid gap-4">
-            <div className="grid gap-2">
-              <Label
-                htmlFor="email"
-                className="text-xl sm:text-2xl text-[#926e45]"
-              >
-                Login Id
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="m@example.com"
-                required
-                className="text-lg p-3"
-              />
-            </div>
-            <div className="grid gap-2">
-              <div className="flex items-center">
-                <Label
-                  htmlFor="password"
-                  className="text-xl sm:text-2xl text-[#926e45]"
-                >
-                  Password
-                </Label>
-                <Link
-                  href="/forgot-password"
-                  className="ml-auto inline-block text-lg underline text-[#c4a97e]"
-                >
-                  Forgot your password?
-                </Link>
-              </div>
-              <Input
-                id="password"
-                type="password"
-                required
-                className="text-lg p-3"
-              />
-            </div>
-            <Button
-              size="lg"
-              type="submit"
-              className="w-full bg-[#c4a97e] text-[#6c5641] text-2xl hover:text"
-            >
-              Login
-            </Button>
-          </div>
+          <LoginForm />
           <div className="mt-4 text-center text-lg text-[#95866f]">
             Don&apos;t have an account?{" "}
             <Link href="#" className="underline text-[#c4a97e]">
