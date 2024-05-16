@@ -1,10 +1,10 @@
 "use server";
 import { signIn } from "@/auth";
 
-import { getUserByEmail } from "@/data/user";
+import { getUserByEmail } from "@/lib/user";
 import prisma from "@/lib/db";
 
-import bcrypt from "bcryptjs";
+import bcrypt from "bcrypt";
 import { DEFAULT_LOGIN_REDIRECT } from "@/routes";
 import { LoginSchema } from "@/schemas";
 import { AuthError } from "next-auth";
@@ -20,7 +20,7 @@ export const login = async (
       error: "Invalid fields",
     };
   }
-  const { email, password, code } = validatedFields.data;
+  const { email, password } = validatedFields.data;
   const existingUser = await getUserByEmail(email);
   if (!existingUser || !existingUser.password || !existingUser.email) {
     return {
