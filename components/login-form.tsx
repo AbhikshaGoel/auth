@@ -17,10 +17,11 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { LoginSchema } from "@/schemas";
-import FormError from "@/components/form-error";
-import { useTransition, useState, SetStateAction } from "react";
-//import { login } from "@/actions/login";
+
+import { useTransition, useState } from "react";
+import { login } from "@/actions/login";
 import Link from "next/link";
+import FormError from "./form-error";
 const LoginForm = () => {
   const urlParams = useSearchParams();
   const callBackUrl = urlParams.get("callbackUrl");
@@ -41,36 +42,25 @@ const LoginForm = () => {
     },
   });
   function onSubmit() {
-    console.log("Submitted");
+    console.log("login");
   }
   // function onSubmit(values: z.infer<typeof LoginSchema>) {
   //   setError("");
   //   setSuccess("");
   //   startTransition(() => {
   //     login(values, callBackUrl)
-  //       .then(
-  //         (data: {
-  //           error: SetStateAction<string>;
-  //           success: SetStateAction<string>;
-  //           twoFactor: any;
-  //         }) => {
-  //           if (data?.error) {
-  //             form.reset();
-  //             setError(data.error);
-  //           }
-  //           if (data?.success) {
-  //             // TODO: ADD 2FA
-  //             form.reset();
-  //             setSuccess(data?.success);
-  //           }
-  //           if (data?.twoFactor) {
-  //             console.log(data.twoFactor);
-
-  //             setTwoFactor(true);
-  //           }
+  //       .then((data) => {
+  //         if (data?.error) {
+  //           form.reset();
+  //           setError(data.error);
   //         }
-  //       )
-  //       .catch((err: any) => {
+  //         if (data?.success) {
+  //           // TODO: ADD 2FA
+  //           form.reset();
+  //           setSuccess(data?.success);
+  //         }
+  //       })
+  //       .catch((err) => {
   //         setError("Something went wrong.");
   //       });
   //   });
@@ -88,7 +78,7 @@ const LoginForm = () => {
                   <FormLabel>Email</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="0009999"
+                      placeholder="janedoe@mail.com"
                       {...field}
                       type="email"
                       disabled={isPending}
@@ -142,12 +132,7 @@ const LoginForm = () => {
           />
         )}
         <FormError message={error || errorUrlParam} />
-
-        <Button
-          type="submit"
-          className="w-full bg-[#c4a97e] text-[#6c5641] text-2xl hover:text"
-          disabled={isPending}
-        >
+        <Button type="submit" className="w-full" disabled={isPending}>
           {isTwoFactor ? "Confirm" : "Login"}
         </Button>
       </form>
