@@ -32,8 +32,8 @@ const LoginForm = () => {
 
   const [isPending, startTransition] = useTransition();
   const [isTwoFactor, setTwoFactor] = useState(false); // TODO: ADD 2FA
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [error, setError] = useState<string | undefined>("");
+  const [success, setSuccess] = useState<string | undefined>("");
   const form = useForm<z.infer<typeof LoginSchema>>({
     resolver: zodResolver(LoginSchema),
     defaultValues: {
@@ -41,30 +41,30 @@ const LoginForm = () => {
       password: "",
     },
   });
-  function onSubmit() {
-    console.log("login");
-  }
-  // function onSubmit(values: z.infer<typeof LoginSchema>) {
-  //   setError("");
-  //   setSuccess("");
-  //   startTransition(() => {
-  //     login(values, callBackUrl)
-  //       .then((data) => {
-  //         if (data?.error) {
-  //           form.reset();
-  //           setError(data.error);
-  //         }
-  //         if (data?.success) {
-  //           // TODO: ADD 2FA
-  //           form.reset();
-  //           setSuccess(data?.success);
-  //         }
-  //       })
-  //       .catch((err) => {
-  //         setError("Something went wrong.");
-  //       });
-  //   });
+  // function onSubmit() {
+  //   console.log("login");
   // }
+  function onSubmit(values: z.infer<typeof LoginSchema>) {
+    setError("");
+    //setSuccess("");
+    startTransition(() => {
+      login(values, callBackUrl)
+        .then((data) => {
+          if (data?.error) {
+            form.reset();
+            setError(data.error);
+          }
+          // if (data?.success) {
+          //   // TODO: ADD 2FA
+          //   form.reset();
+          //   setSuccess(data?.success);
+          // }
+        })
+        .catch((err) => {
+          setError("Something went wrong.");
+        });
+    });
+  }
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
