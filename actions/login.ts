@@ -16,49 +16,27 @@ export const login = async (
     };
   }
   const { email, password } = validatedFields.data;
+  console.log("user id before ad",email);
 
   // Authenticate user
   const isAuthenticated = await authenticateUser(email, password);
+  console.log("user id",email);
 
-  
-
-  // Authorize user (optional)
-  const isAuthorized = await authorizeUser(email);
-
-  if (!isAuthorized) {
-    return {
-      error: "Unauthorized",
-    };
-  }
-
-  // Create session (optional)
-  //const session = await createSession(email);
-
-  // Redirect if callback URL is provided
-  // if (callBackUrl) {
-  //   return {
-  //     success: true,
-  //     session, // Optionally return session data
-  //     redirectTo: callBackUrl,
-  //   };
-  // }
-
-  // return {
-  //   success: true,
-  //   session, // Optionally return session data
-  // };
 };
 
 // Example authentication function (replace with your actual authentication logic)
 // Example authentication function with OU (Organizational Unit)
 const authenticateUser = async (email: string, password: string) => {
   // Initialize LDAP client
-  const client = ldap.createClient({ url: '10.52.25.27' });
+  const client = ldap.createClient({ url: 'ldap://10.52.25.27:3268' });
 
   // Construct the user's DN (Distinguished Name) including the OU
   const dn = `uid=${email},dc=bd,dc=corporate,dc=ds, dc=indianoil,dc=in`; // Modify this according to your LDAP structure
 
   // Attempt to bind with the user's DN and password
+  // client.bind(email,password,function(error:any){
+  //   console.log("ldap bind error");
+  // })
   
     client.bind(dn, password, (err: any) => {
       if (err) {
@@ -75,19 +53,5 @@ const authenticateUser = async (email: string, password: string) => {
 };
 
 
-// Example authorization function (replace with your actual authorization logic)
-const authorizeUser = async (email: string) => {
-  // Implement your authorization logic here, e.g., check user roles/permissions
-  // For simplicity, always return true in this example
-  return true;
-};
 
-// Example session creation function (replace with your actual session management logic)
-const createSession = async (email: string) => {
-  // Implement your session creation logic here, e.g., set a session cookie, generate JWT, etc.
-  // For simplicity, return a mock session object
-  return {
-    userId: email,
-    // Other session data...
-  };
-};
+

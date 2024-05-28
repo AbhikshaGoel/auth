@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { useSearchParams } from "next/navigation";
+import axios from 'axios';
 
 import { Button } from "@/components/ui/button";
 import {
@@ -19,7 +20,7 @@ import { Input } from "@/components/ui/input";
 import { LoginSchema } from "@/schemas";
 
 import { useTransition, useState } from "react";
-import { login } from "@/actions/login";
+
 import Link from "next/link";
 import FormError from "./form-error";
 const LoginForm = () => {
@@ -44,27 +45,54 @@ const LoginForm = () => {
   // function onSubmit() {
   //   console.log("login");
   // }
-  function onSubmit(values: z.infer<typeof LoginSchema>) {
-    setError("");
-    //setSuccess("");
-    startTransition(() => {
-      login(values, callBackUrl)
-        .then((data) => {
-          if (data?.error) {
-            form.reset();
-            setError(data.error);
-          }
-          // if (data?.success) {
-          //   // TODO: ADD 2FA
-          //   form.reset();
-          //   setSuccess(data?.success);
-          // }
-        })
-        .catch((err) => {
-          setError("Something went wrong.");
-        });
-    });
-  }
+  // function onSubmit(values: z.infer<typeof LoginSchema>) {
+  //   setError("");
+  //   //setSuccess("");
+  //   startTransition(() => {
+  //     login(values, callBackUrl)
+  //       .then((data) => {
+  //         if (data?.error) {
+  //           form.reset();
+  //           setError(data.error);
+  //         }
+  //         // if (data?.success) {
+  //         //   // TODO: ADD 2FA
+  //         //   form.reset();
+  //         //   setSuccess(data?.success);
+  //         // }
+  //       })
+  //       .catch((err) => {
+  //         setError("Something went wrong.");
+  //       });
+  //   });
+  // }
+  
+
+function onSubmit(values: z.infer<typeof LoginSchema>) {
+  setError("");
+  //setSuccess("");
+  startTransition(() => {
+    axios.post('/api/login', values)
+      .then((response:any) => {
+        const data = response.data;
+        if (data?.error) {
+          form.reset(); // Reset form on error
+          setError(data.error);
+        } else {
+          // Handle successful login
+          // Uncomment this section and implement the logic as needed
+          // form.reset(); // Optionally reset the form
+          // setSuccess("Login successful");
+          // Redirect user, update UI, etc.
+        }
+      })
+      .catch((err:any) => {
+        // Handle other errors (e.g., network errors)
+        setError("Something went wrong.");
+      });
+  });
+}
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
@@ -116,21 +144,7 @@ const LoginForm = () => {
             />
           </>
         )}
-        {isTwoFactor && (
-          <FormField
-            control={form.control}
-            name="code"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Two Factor Code</FormLabel>
-                <FormControl>
-                  <Input placeholder="123456" {...field} disabled={isPending} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
+        
         <FormError message={error || errorUrlParam} />
         <Button type="submit" className="w-full" disabled={isPending}>
           {isTwoFactor ? "Confirm" : "Login"}
