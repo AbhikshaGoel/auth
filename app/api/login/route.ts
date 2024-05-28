@@ -1,68 +1,89 @@
 import { LoginSchema } from "@/schemas";
 import { NextResponse } from "next/server";
-
 const ldap = require('ldapjs');
-
 import * as z from "zod";
 
-// Assuming you have functions for authentication, authorization, and session management
-
-// Example authentication function (replace with your actual authentication logic)
 const authenticateUser = async (email: string, password: string) => {
-  // Initialize LDAP client
-  const client = ldap.createClient({ url: 'ldap://10.52.25.27:3268' });
-  console.log("creating connections");
+  return new Promise((resolve, reject) => {
+    const client = ldap.createClient({ url: 'ldap://10.52.25.27:389' });
+    const uid = email + "@ds.indianoil.in";
+    const searchBase = "dc=ds,dc=indianoil,dc=in";
 
-  // Construct the user's DN (Distinguished Name) including the OU
-  const dn = `uid=${email},dc=bd,dc=corporate,dc=ds, dc=indianoil,dc=in`; // Modify this according to your LDAP structure
-
-  // Attempt to bind with the user's DN and password
-  return new Promise<boolean>((resolve) => {
-    //console.log("hitting ad");
-    client.bind(dn, password, (err: any) => {
-        //console.log("hitting binding");
-
+    client.bind(uid, password, (err: any) => {
       if (err) {
-        console.error('LDAP authentication failed---', err);
-        resolve(false);
+        console.error('LDAP bind failed:', err);
+        client.unbind((unbindErr: any) => {
+          if (unbindErr) {
+            console.error('LDAP unbind failed:', unbindErr);
+          }
+          reject(err);
+        });
       } else {
-        console.log('LDAP authentication successful');
-        resolve(true);
+        const opts = {
+          filter: `(sAMAccountName=${email})`,
+          scope: 'sub',
+          attributes: ['dn', 'sn', 'cn'],
+        };
+
+        client.search('ou=users,dc=ds,dc=indianoil,dc=in', opts, (searchErr: any, searchRes: any) => {
+          if (searchErr) {
+            console.error('LDAP search error:', searchErr);
+            client.unbind((unbindErr: any) => {
+              if (unbindErr) {
+                console.error('LDAP unbind failed:', unbindErr);
+              }
+              reject(searchErr);
+            });
+          } else {
+            searchRes.on('searchEntry', (entry: any) => {
+              console.log('Found user:', entry.object);
+              client.unbind((unbindErr: any) => {
+                if (unbindErr) {
+                  console.error('LDAP unbind failed:', unbindErr);
+                }
+                resolve(entry.object); // Resolving with user object
+              });
+            });
+
+            searchRes.on('error', (searchErr: any) => {
+              console.error('LDAP search error:', searchErr);
+              client.unbind((unbindErr: any) => {
+                if (unbindErr) {
+                  console.error('LDAP unbind failed:', unbindErr);
+                }
+                reject(searchErr);
+              });
+            });
+          }
+        });
       }
-      // Close the LDAP connection
-      client.unbind();
     });
   });
 };
 
 export const POST = async (req: Request, res: Response) => {
   try {
-    // Await the result of req.json() to get the actual form data
     const value: z.infer<typeof LoginSchema> = await req.json();
 
     const validatedFields = LoginSchema.safeParse(value);
     if (!validatedFields.success) {
       return NextResponse.json({
         error: "Invalid fields",
-        status: 400, // Bad request
+        status: 400,
       });
     }
 
     const { email, password } = validatedFields.data;
-    console.log("user id before ad", email);
 
-    // Authenticate user
     const isAuthenticated = await authenticateUser(email, password);
-    console.log("user id ",email," authitacted", isAuthenticated);
 
-    // You may want to provide a success response
     return NextResponse.json({
       Message: "Authentication successful",
       status: 200,
+      user: isAuthenticated // Sending authenticated user object in response
     });
   } catch (error) {
     console.error("API endpoint error:", error);
-    // Handle errors and provide an appropriate response
     return NextResponse.json({
       Message: "Internal server error",
       status: 500,
