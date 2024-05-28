@@ -78,9 +78,9 @@ const LoginForm = () => {
                   <FormLabel>Email</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="janedoe@mail.com"
+                      placeholder="0051xxx"
                       {...field}
-                      type="email"
+                      type="number"
                       disabled={isPending}
                     />
                   </FormControl>

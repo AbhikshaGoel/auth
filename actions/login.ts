@@ -13,7 +13,9 @@ export const login = async (
       error: "Invalid fields",
     };
   }
-  const { email, password, code } = validatedFields.data;
+  const { email, password } = validatedFields.data;
+
+  console.log("userid", email);
   //const existingUser = await getUserByEmail(email);
   // if (!existingUser || !existingUser.password || !existingUser.email) {
   //   return {
