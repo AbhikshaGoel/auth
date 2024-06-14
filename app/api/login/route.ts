@@ -1,65 +1,82 @@
+import mssqlconnect from "@/lib/mssqlconnect";
 import { LoginSchema } from "@/schemas";
 import { NextResponse } from "next/server";
+const sql = require('mssql')
+
 const ldap = require('ldapjs');
 import * as z from "zod";
 
-const authenticateUser = async (email: string, password: string) => {
-  return new Promise((resolve, reject) => {
-    const client = ldap.createClient({ url: 'ldap://10.52.25.27:389' });
-    const uid = email + "@ds.indianoil.in";
-    const searchBase = "dc=ds,dc=indianoil,dc=in";
-
-    client.bind(uid, password, (err: any) => {
-      if (err) {
-        console.error('LDAP bind failed:', err);
-        client.unbind((unbindErr: any) => {
-          if (unbindErr) {
-            console.error('LDAP unbind failed:', unbindErr);
-          }
-          reject(err);
+// Assuming your LDAP search result is an array of objects
+interface LDAPSearchResult {
+    // Define the structure of your LDAP search result object
+    // This is just an example. You should adjust it based on the actual structure.
+    [key: string]: any;
+}
+async function empLogin(uid: string, pass: string) {
+  try {
+    
+      const principalName = uid + process.env.PRINCIPAL_NAME;
+      const ldapClient = ldap.createClient({ url: `${process.env.LDAP_HOST}` });
+      try {
+        await new Promise<void>((resolve, reject) => {
+          ldapClient.bind(principalName, pass, (err: any) => {
+            if (err) {
+              reject(err);
+            } else {
+              resolve();
+            }
+          });
         });
-      } else {
+
+        // LDAP search example
         const opts = {
-          filter: `(sAMAccountName=${email})`,
-          scope: 'sub',
-          attributes: ['dn', 'sn', 'cn'],
+          filter: `(&(objectClass=user)(sAMAccountName=${uid}))`,
+          scope: 'sub'
         };
-
-        client.search('ou=users,dc=ds,dc=indianoil,dc=in', opts, (searchErr: any, searchRes: any) => {
-          if (searchErr) {
-            console.error('LDAP search error:', searchErr);
-            client.unbind((unbindErr: any) => {
-              if (unbindErr) {
-                console.error('LDAP unbind failed:', unbindErr);
-              }
-              reject(searchErr);
-            });
-          } else {
-            searchRes.on('searchEntry', (entry: any) => {
-              console.log('Found user:', entry.object);
-              client.unbind((unbindErr: any) => {
-                if (unbindErr) {
-                  console.error('LDAP unbind failed:', unbindErr);
-                }
-                resolve(entry.object); // Resolving with user object
+        const searchResult = await new Promise<LDAPSearchResult[]>((resolve, reject) => {
+          ldapClient.search(`${process.env.LDAP_DN}`, opts, (err: any, res: any) => {
+            if (err) {
+              reject(err);
+            } else {
+              const entries: any = [];
+              res.on('searchEntry', (entry: any) => {
+                entries.push(entry.object);
               });
-            });
-
-            searchRes.on('error', (searchErr: any) => {
-              console.error('LDAP search error:', searchErr);
-              client.unbind((unbindErr: any) => {
-                if (unbindErr) {
-                  console.error('LDAP unbind failed:', unbindErr);
-                }
-                reject(searchErr);
+              res.on('end', () => {
+                resolve(entries);
               });
-            });
-          }
+            }
+          });
         });
+
+        ldapClient.unbind();
+        return searchResult.length > 0;
+      } catch (error) {
+        //console.error("LDAP search error:", error);
+        ldapClient.unbind();
+        return false; // Return false for failed login attempt
       }
-    });
-  });
-};
+    
+  } catch (error) {
+    //console.error("LDAP authentication error:", error);
+    return false; // Return false for failed login attempt
+  }
+}
+
+
+async function hasAdminPrivilages(email:string){
+    await mssqlconnect();
+    //Fetch all the countries data
+    const result = await sql.query`SELECT EmployeeName, UserRole FROM UserMaster WHERE EmployeeNumber=${email}`;
+    // Map the result to a JSON format
+    const empData = result.recordset.map((record: any) => ({
+        userName:record.EmployeeName,
+      userRole: record.UserRole,
+      // Add more fields as needed
+    }));
+    return empData;
+    
+}
 
 export const POST = async (req: Request, res: Response) => {
   try {
@@ -74,14 +91,40 @@ export const POST = async (req: Request, res: Response) => {
     }
 
     const { email, password } = validatedFields.data;
+    let isAuthenticated=false;
 
-    const isAuthenticated = await authenticateUser(email, password);
+    try{
+      isAuthenticated = await empLogin(email, password);
+    }catch(errror){
+      console.log("auth error");
+    }
+
+        console.log(isAuthenticated ? "Login successful" : "Login failed");
+        //console.log("user ",isAuthenticated);
+        let user;
+        if(isAuthenticated){
+            user = await hasAdminPrivilages(email);
+        
+        let userName;
+        let userRole;
+        if (user.length > 0) {
+        userName = user[0].userName; // Assign user name
+        userRole = user[0].userRole; // Assign user role
+        }
+    
 
     return NextResponse.json({
       Message: "Authentication successful",
       status: 200,
-      user: isAuthenticated // Sending authenticated user object in response
+      user: isAuthenticated,
+      userNumber:email,
+      userName:userName,
+      hasAdminPrivilages:userRole // Sending authenticated user ID in response
     });
+  }
+  else{
+    return NextResponse.json({message:"Login Failed",status:200});
+  }
   } catch (error) {
     console.error("API endpoint error:", error);
     return NextResponse.json({
@@ -90,3 +133,4 @@ export const POST = async (req: Request, res: Response) => {
     });
   }
 };
+
