@@ -14,7 +14,6 @@ interface LDAPSearchResult {
 }
 async function empLogin(uid: string, pass: string) {
   try {
-    
       const principalName = uid + process.env.PRINCIPAL_NAME;
       const ldapClient = ldap.createClient({ url: `${process.env.LDAP_HOST}` });
       try {

@@ -23,13 +23,10 @@ import { useTransition, useState } from "react";
 
 import Link from "next/link";
 import FormError from "./form-error";
+import { signIn } from "@/auth";
+import { signInWithCredentials } from "@/sign";
 const LoginForm = () => {
-  const urlParams = useSearchParams();
-  const callBackUrl = urlParams.get("callbackUrl");
-  const errorUrlParam =
-    urlParams.get("error") === "OAuthAccountNotLinked"
-      ? "This account is already linked to a user. Please sign in with a different account."
-      : ``;
+
 
   const [isPending, startTransition] = useTransition();
   const [isTwoFactor, setTwoFactor] = useState(false); // TODO: ADD 2FA
@@ -68,30 +65,16 @@ const LoginForm = () => {
   // }
   
 
-function onSubmit(values: z.infer<typeof LoginSchema>) {
-  setError("");
-  //setSuccess("");
-  startTransition(() => {
-    axios.post('/api/login', values)
-      .then((response:any) => {
-        const data = response.data;
-        if (data?.error) {
-          form.reset(); // Reset form on error
-          setError(data.error);
-        } else {
-          // Handle successful login
-          // Uncomment this section and implement the logic as needed
-          // form.reset(); // Optionally reset the form
-          // setSuccess("Login successful");
-          // Redirect user, update UI, etc.
-        }
-      })
-      .catch((err:any) => {
-        // Handle other errors (e.g., network errors)
-        setError("Something went wrong.");
-      });
-  });
-}
+  const onSubmit = async (values: z.infer<typeof LoginSchema>) => {
+    try {
+     const response = await signInWithCredentials(values);
+     console.log("user response", response);
+      // Handle success (optional)
+    } catch (error:any) {
+      setError(error.message);
+    }
+  };
+
 
   return (
     <Form {...form}>
@@ -145,7 +128,7 @@ function onSubmit(values: z.infer<typeof LoginSchema>) {
           </>
         )}
         
-        <FormError message={error || errorUrlParam} />
+        <FormError message={error} />
         <Button type="submit" className="w-full" disabled={isPending}>
           {isTwoFactor ? "Confirm" : "Login"}
         </Button>
